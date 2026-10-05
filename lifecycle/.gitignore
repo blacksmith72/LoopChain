@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+
+# Keys and per-machine deployment state: never commit
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+deployments*.json

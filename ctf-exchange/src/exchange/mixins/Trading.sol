@@ -15,6 +15,18 @@ import { Order, Side, MatchType, OrderStatus } from "../libraries/OrderStructs.s
 /// @title Trading
 /// @notice Implements logic for trading CTF assets
 abstract contract Trading is IFees, ITrading, IHashing, IRegistry, ISignatures, INonceManager, IAssetOperations {
+    /// @notice The address receiving all fees charged on fills.
+    /// @dev LOOPBET FORK (modification #3): upstream pays fees to `msg.sender` — the operator EOA
+    /// calling fill/match — which makes fee custody a pure trust assumption. Fees are routed to an
+    /// immutable recipient instead (the LoopBet treasury vault, `contracts/loop/src/TreasuryVault.sol`);
+    /// no admin can ever redirect them.
+    address public immutable feeRecipient;
+
+    constructor(address _feeRecipient) {
+        if (_feeRecipient == address(0)) revert InvalidFeeRecipient();
+        feeRecipient = _feeRecipient;
+    }
+
     /// @notice Mapping of orders to their current status
     mapping(bytes32 => OrderStatus) public orderStatus;
 
@@ -156,8 +168,9 @@ abstract contract Trading is IFees, ITrading, IHashing, IRegistry, ISignatures, 
         // Transfer order proceeds post fees from the Exchange to the taker order maker
         _transfer(address(this), takerOrder.maker, takerAssetId, taking - fee);
 
-        // Charge the fee to taker order maker, explicitly transferring the fee from the Exchange to the Operator
-        _chargeFee(address(this), msg.sender, takerAssetId, fee);
+        // Charge the fee to taker order maker, explicitly transferring the fee from the Exchange to
+        // the fee recipient (LOOPBET FORK: upstream sent it to msg.sender, the Operator)
+        _chargeFee(address(this), feeRecipient, takerAssetId, fee);
 
         // Refund any leftover tokens pulled from the taker to the taker order
         uint256 refund = _getBalance(makerAssetId);
@@ -268,8 +281,9 @@ abstract contract Trading is IFees, ITrading, IHashing, IRegistry, ISignatures, 
         // Transfer order proceeds minus fees from the Exchange to the order maker
         _transfer(address(this), maker, takerAssetId, takingAmount - fee);
 
-        // Transfer fees from Exchange to the Operator
-        _chargeFee(address(this), msg.sender, takerAssetId, fee);
+        // Transfer fees from Exchange to the fee recipient (LOOPBET FORK: upstream sent it to
+        // msg.sender, the Operator)
+        _chargeFee(address(this), feeRecipient, takerAssetId, fee);
     }
 
     function _deriveMatchType(Order memory takerOrder, Order memory makerOrder) internal pure returns (MatchType) {

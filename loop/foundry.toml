@@ -1,0 +1,14 @@
+[profile.default]
+src = "src"
+test = "test"
+libs = ["lib"]
+optimizer = true
+optimizer_runs = 200
+# Reproducible builds / clean source verification (matches upstream URD config).
+bytecode_hash = "none"
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = true
+wrap_comments = true

@@ -14,13 +14,18 @@ contract ExchangeDeployment is Script {
     /// @param ctf          - The CTF address
     /// @param proxyFactory - The Polymarket proxy factory address
     /// @param safeFactory  - The Polymarket Gnosis Safe factory address
-    function deployExchange(address admin, address collateral, address ctf, address proxyFactory, address safeFactory)
-        public
-        returns (address exchange)
-    {
+    /// @param feeRecipient - The immutable fee sink (LOOPBET FORK: the treasury vault)
+    function deployExchange(
+        address admin,
+        address collateral,
+        address ctf,
+        address proxyFactory,
+        address safeFactory,
+        address feeRecipient
+    ) public returns (address exchange) {
         vm.startBroadcast();
 
-        CTFExchange exch = new CTFExchange(collateral, ctf, proxyFactory, safeFactory);
+        CTFExchange exch = new CTFExchange(collateral, ctf, proxyFactory, safeFactory, feeRecipient);
 
         // Grant Auth privileges to the Admin address
         exch.addAdmin(admin);

@@ -26,15 +26,16 @@ contract CTFExchange is
     Fees,
     Pausable,
     AssetOperations,
-    Hashing("Polymarket CTF Exchange", "1"),
+    Hashing("LoopBet Exchange", "1"),
     NonceManager,
     Registry,
     Signatures,
     Trading
 {
-    constructor(address _collateral, address _ctf, address _proxyFactory, address _safeFactory)
+    constructor(address _collateral, address _ctf, address _proxyFactory, address _safeFactory, address _feeRecipient)
         Assets(_collateral, _ctf)
         Signatures(_proxyFactory, _safeFactory)
+        Trading(_feeRecipient)
     { }
 
     /*//////////////////////////////////////////////////////////////

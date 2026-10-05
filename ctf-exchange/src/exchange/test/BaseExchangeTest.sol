@@ -37,6 +37,9 @@ contract BaseExchangeTest is TestHelper, IAuthEE, IFeesEE, IRegistryEE, IPausabl
     uint256 public no;
 
     address public admin = alice;
+    // LOOPBET FORK: the immutable fee sink (the treasury vault in production). Deliberately distinct
+    // from admin/operator so the tests prove fees no longer follow msg.sender.
+    address public feeRecipient = vm.addr(0xFEE);
     uint256 internal bobPK = 0xB0B;
     uint256 internal carlaPK = 0xCA414;
     address public bob;
@@ -71,7 +74,7 @@ contract BaseExchangeTest is TestHelper, IAuthEE, IFeesEE, IRegistryEE, IPausabl
         contractWallet = new ERC1271Mock(carla);
 
         vm.startPrank(admin);
-        exchange = new CTFExchange(address(usdc), address(ctf), address(0), address(0));
+        exchange = new CTFExchange(address(usdc), address(ctf), address(0), address(0), feeRecipient);
         exchange.registerToken(yes, no, conditionId);
         exchange.addOperator(bob);
         exchange.addOperator(carla);

@@ -1,0 +1,21 @@
+# Secrets: never commit. Env/key files under any name (.env, .env.old, some.env.bak, ...)
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -4,6 +4,10 @@ pragma solidity <0.9.0;
 import { OrderStatus, Order } from "../libraries/OrderStructs.sol";
 
 interface ITradingEE {
+    /// @notice LOOPBET FORK: thrown when the immutable feeRecipient is the zero address at
+    /// construction (fees would be unroutable — every fee-bearing fill would revert).
+    error InvalidFeeRecipient();
+
     error NotOwner();
     error NotTaker();
     error OrderFilledOrCancelled();

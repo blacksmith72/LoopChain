@@ -2,6 +2,7 @@
 pragma solidity <0.9.0;
 
 import { BaseExchangeTest } from "exchange/test/BaseExchangeTest.sol";
+import { CTFExchange } from "exchange/CTFExchange.sol";
 import { Order, Side, MatchType, OrderStatus, SignatureType } from "exchange/libraries/OrderStructs.sol";
 
 contract CTFExchangeTest is BaseExchangeTest {
@@ -10,6 +11,13 @@ contract CTFExchangeTest is BaseExchangeTest {
         assertTrue(exchange.isOperator(admin));
         assertFalse(exchange.isAdmin(brian));
         assertFalse(exchange.isOperator(brian));
+    }
+
+    // LOOPBET FORK: a zero feeRecipient would make every fee-bearing fill revert (fees
+    // unroutable); the constructor must refuse to deploy that way.
+    function testConstructorRevertsOnZeroFeeRecipient() public {
+        vm.expectRevert(InvalidFeeRecipient.selector);
+        new CTFExchange(address(usdc), address(ctf), address(0), address(0), address(0));
     }
 
     function testAuth() public {
@@ -124,7 +132,8 @@ contract CTFExchangeTest is BaseExchangeTest {
     function testHashOrder() public {
         Order memory order = _createOrder(bob, 1, 50_000_000, 100_000_000, Side.BUY);
 
-        bytes32 expectedHash = 0xea9d5909ecf95a08c9906dc3cfafa62ca6b505f5e1c37c33e0d01099c0565c8f;
+        // Golden hash under the LoopBet Exchange EIP-712 domain (name changed from upstream)
+        bytes32 expectedHash = 0x0154546fdeb58ac87de2e7fb80a205364aa60eab4bffccf2eb50c4130297bb15;
 
         assertEq(exchange.hashOrder(order), expectedHash);
     }

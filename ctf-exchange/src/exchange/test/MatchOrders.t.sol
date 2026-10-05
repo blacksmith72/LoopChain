@@ -176,14 +176,14 @@ contract MatchOrdersTest is BaseExchangeTest {
         uint256 makerFee = calculateFee(makerFeeRateBps, makerFillAmount, sell.makerAmount, sell.takerAmount, sell.side);
         if (makerFee > 0) {
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, 0, makerFee);
+            emit FeeCharged(feeRecipient, 0, makerFee);
         }
 
         uint256 takerFee = calculateFee(takerFeeRateBps, fillAmount, fillAmount, makerFillAmount, buy.side);
         if (takerFee > 0) {
             // TakerFee could be >= expected taker fee due to surplus
             vm.expectEmit(true, true, false, false);
-            emit FeeCharged(admin, buy.tokenId, takerFee);
+            emit FeeCharged(feeRecipient, buy.tokenId, takerFee);
         }
 
         vm.prank(admin);
@@ -221,13 +221,13 @@ contract MatchOrdersTest is BaseExchangeTest {
         uint256 makerFee = calculateFee(makerFeeRateBps, taking, noBuy.makerAmount, noBuy.takerAmount, noBuy.side);
         if (makerFee > 0) {
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, yes, makerFee);
+            emit FeeCharged(feeRecipient, yes, makerFee);
         }
 
         uint256 takerFee = calculateFee(takerFeeRateBps, taking, fillAmount, taking, yesBuy.side);
         if (takerFee > 0) {
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, no, takerFee);
+            emit FeeCharged(feeRecipient, no, takerFee);
         }
 
         checkpointCTF(carla, no);
@@ -268,14 +268,14 @@ contract MatchOrdersTest is BaseExchangeTest {
             calculateFee(makerFeeRateBps, fillAmount, noSell.makerAmount, noSell.takerAmount, noSell.side);
         if (makerFee > 0) {
             vm.expectEmit(true, true, true, true);
-            emit FeeCharged(admin, 0, makerFee);
+            emit FeeCharged(feeRecipient, 0, makerFee);
         }
 
         uint256 takerFee = calculateFee(takerFeeRateBps, fillAmount, fillAmount, taking, yesSell.side);
         if (takerFee > 0) {
             // TakerFee could be >= expected taker fee due to surplus
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, 0, takerFee);
+            emit FeeCharged(feeRecipient, 0, takerFee);
         }
 
         checkpointCollateral(carla);
@@ -318,14 +318,14 @@ contract MatchOrdersTest is BaseExchangeTest {
     function testWithFees() public {
         vm.startPrank(admin);
 
-        // Init a yes BUY taker order at 50c with a 10% taker fee
-        uint256 takerFeeRate = 1000;
+        // Init a yes BUY taker order at 50c with a 5% taker fee (the LoopBet max fee rate)
+        uint256 takerFeeRate = 500;
         Order memory buy = _createAndSignOrderWithFee(
             bobPK,
             yes,
             50_000_000,
             100_000_000,
-            takerFeeRate, // Taker fee of 10%
+            takerFeeRate, // Taker fee of 5%
             Side.BUY
         );
 
@@ -351,7 +351,7 @@ contract MatchOrdersTest is BaseExchangeTest {
 
         if (expectedMakerFee > 0) {
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, yes, expectedMakerFee);
+            emit FeeCharged(feeRecipient, yes, expectedMakerFee);
         }
 
         vm.expectEmit(true, true, true, true);
@@ -359,7 +359,7 @@ contract MatchOrdersTest is BaseExchangeTest {
 
         if (expectedMakerFee > 0) {
             vm.expectEmit(true, true, true, false);
-            emit FeeCharged(admin, yes, expectedTakerFee);
+            emit FeeCharged(feeRecipient, yes, expectedTakerFee);
         }
 
         vm.expectEmit(true, true, true, true);
@@ -408,7 +408,7 @@ contract MatchOrdersTest is BaseExchangeTest {
 
         if (expectedTakerFee > 0) {
             vm.expectEmit(true, true, true, true);
-            emit FeeCharged(admin, 0, expectedTakerFee);
+            emit FeeCharged(feeRecipient, 0, expectedTakerFee);
         }
 
         vm.expectEmit(true, true, true, true);
@@ -459,13 +459,13 @@ contract MatchOrdersTest is BaseExchangeTest {
             calculateFee(makerFeeRate, 100_000_000, noBuy.makerAmount, noBuy.takerAmount, noBuy.side);
 
         vm.expectEmit(true, true, true, true);
-        emit FeeCharged(admin, no, expectedMakerFee);
+        emit FeeCharged(feeRecipient, no, expectedMakerFee);
 
         vm.expectEmit(true, true, true, true);
         emit OrderFilled(exchange.hashOrder(noBuy), carla, bob, 0, no, 50_000_000, 100_000_000, expectedMakerFee);
 
         vm.expectEmit(true, true, true, true);
-        emit FeeCharged(admin, yes, expectedTakerFee);
+        emit FeeCharged(feeRecipient, yes, expectedTakerFee);
 
         vm.expectEmit(true, true, true, true);
         emit OrderFilled(exchange.hashOrder(buy), bob, address(exchange), 0, yes, 50_000_000, 100_000_000, expectedTakerFee);
@@ -473,8 +473,8 @@ contract MatchOrdersTest is BaseExchangeTest {
         // Match the orders
         exchange.matchOrders(buy, makerOrders, takerFillAmount, fillAmounts);
 
-        assertCTFBalance(admin, yes, expectedTakerFee);
-        assertCTFBalance(admin, no, expectedMakerFee);
+        assertCTFBalance(feeRecipient, yes, expectedTakerFee);
+        assertCTFBalance(feeRecipient, no, expectedMakerFee);
     }
 
     function testMergeWithFees() public {
@@ -516,13 +516,13 @@ contract MatchOrdersTest is BaseExchangeTest {
             calculateFee(makerFeeRate, 100_000_000, noSell.makerAmount, noSell.takerAmount, noSell.side);
 
         vm.expectEmit(true, true, true, true);
-        emit FeeCharged(admin, 0, expectedMakerFee);
+        emit FeeCharged(feeRecipient, 0, expectedMakerFee);
 
         vm.expectEmit(true, true, true, true);
         emit OrderFilled(exchange.hashOrder(noSell), carla, bob, no, 0, 100_000_000, 50_000_000, expectedMakerFee);
 
         vm.expectEmit(true, true, true, true);
-        emit FeeCharged(admin, 0, expectedTakerFee);
+        emit FeeCharged(feeRecipient, 0, expectedTakerFee);
 
         vm.expectEmit(true, true, true, true);
         emit OrderFilled(exchange.hashOrder(yesSell), bob, address(exchange), yes, 0, 100_000_000, 50_000_000, expectedTakerFee);
